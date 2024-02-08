@@ -248,7 +248,7 @@ class Alunos():
             # Get the enrollment records for the current student
             enrollment_records = student_info.get("registros", [])
             
-            # Iterate through each enrollment record
+            # Im['courseName']terate through each enrollment record
             for enrollment_record in enrollment_records:
                 disciplinas = enrollment_record['disciplinas']
                 # Check if the enrollment status is "APPROVED"
@@ -264,7 +264,8 @@ class Alunos():
             
             # Get the curriculum for the current student's course
             student_info["idCourse"] = Curso().getCursoByName(student_info['nomeCurso'])['idCourse']
-            curriculum = matrizes.get(student_info["idCourse"], {}).get("curriculos", [])
+            curricula = matrizes.get(student_info["idCourse"], {}).get("curriculos", [])
+            curriculum = [c for c in curricula if c['idCurriculum'] == student_info['idCurriculum']] 
             # curriculum = matrizes.get(student_info["nomeCurso"], {}).get("curriculos", [])
             
             # Iterate through each curriculum
@@ -301,11 +302,13 @@ def normalizarMatriculas(matriculas):
                 if len(ndia) > 0:
                     if ndia[0] > alunos[m['idPerson']]['dtmat']:
                         alunos[m['idPerson']]['dtmat'] = ndia[0]
+                        alunos[m['idPerson']]['idCourse'] = Curso().getCursoByName(m['courseName'])['idCourse']
                         alunos[m['idPerson']]['nomeCurso'] = m['courseName']
+                        alunos[m['idPerson']]['idCurriculum'] = m['idCurriculum']
         else:
             
             dia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
-            alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': '','idCurriculum': '', 'nomeCurso':m['courseName'], 'dtmat': dia[0] if len(dia) > 0 else ''}
+            alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'idCurriculum': m['idCurriculum'], 'nomeCurso':m['courseName'], 'dtmat': dia[0] if len(dia) > 0 else ''}
             alunos[m['idPerson']]['matriculas'] = [m]
         i += 1
         print(indent(f"Matrícula {i}", prefix = '       ', predicate=None))
