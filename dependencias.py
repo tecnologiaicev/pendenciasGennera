@@ -54,6 +54,14 @@ class RegistrosAcademicos():
 
 
 class Matriculas():
+    def getDisciplinas(self, enrollment_id):
+        url_disciplinas = f"https://api2.gennera.com.br/institutions/64/enrollments/{enrollment_id}/subjects"
+        try:
+            disciplinas = json.loads(json.dumps(requests.get(url_disciplinas, headers=headers).json()))
+        except Exception as e:
+            return e
+        return disciplinas
+    
     def get(self, enrollment_id):
         url_matricula = f"https://api2.gennera.com.br/institutions/64/enrollments/{enrollment_id}"
         try:
@@ -187,7 +195,14 @@ class Campanhas():
                 lst_matriculas = json.loads(json.dumps(requests.get(url_matriculas, headers=headers).json()))
             except Exception as e:
                 return e
-            matriculas = [m for m in lst_matriculas if m['status']=='active']
+            matriculas = matriculas + [m for m in lst_matriculas if m['status']=='active']
+        # print(indent('Adicionando disciplinas das matrículas',prefix='  ', predicate=None))
+        # i = 1
+        # for m in matriculas:
+        #     m['disciplinas'] = Matriculas().getDisciplinas(m['idEnrollment'])
+        #     print(indent(f"Registro {i} de {len(matriculas)}    ",prefix='      ', predicate=None), end='\r')
+        #     i += 1
+        # print('')
         return matriculas
     
     def filterByCourse(self, campanhas, curso_nome):
@@ -248,7 +263,7 @@ class Alunos():
             # Get the enrollment records for the current student
             enrollment_records = student_info.get("registros", [])
             
-            # Im['courseName']terate through each enrollment record
+            # Iterate through each enrollment record
             for enrollment_record in enrollment_records:
                 disciplinas = enrollment_record['disciplinas']
                 # Check if the enrollment status is "APPROVED"
@@ -262,6 +277,21 @@ class Alunos():
                         }
                         student_data["completed_subjects"].append(completed_subject)
             
+            # Ajustar pegando o resultado da disciplina no diário
+            enrollment_records = student_info.get("matriculas", [])
+            for enrollment_record in enrollment_records:
+                disciplinas = enrollment_record['disciplinas']
+                # Check if the enrollment status is "APPROVED"
+                for disciplina in disciplinas:    
+                    if disciplina["status"] == "APPROVED":
+                        # Add the subject to the list of completed subjects
+                        completed_subject = {
+                            "subjectName": disciplina["subjectName"],
+                            "workload": disciplina["workload"],
+                            "average": disciplina["average"]
+                        }
+                        student_data["completed_subjects"].append(completed_subject)
+                        
             # Get the curriculum for the current student's course
             student_info["idCourse"] = Curso().getCursoByName(student_info['nomeCurso'])['idCourse']
             curricula = matrizes.get(student_info["idCourse"], {}).get("curriculos", [])
