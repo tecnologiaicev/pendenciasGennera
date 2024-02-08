@@ -1,4 +1,6 @@
 import json, requests
+from textwrap import indent
+from sys import prefix
 import datetime as dt
 from datetime import datetime
 from dateutil import parser, tz
@@ -39,6 +41,7 @@ class RegistrosAcademicos():
         except Exception as e:
             return e
         for ra in lst_registros:
+            print(indent('Varrendo registros acadêmicos recuperados ...', prefix = '    ', predicate=None))
             url_disc = f"https://api2.gennera.com.br/institutions/64/enrollmentRecords/{ra['idEnrollmentRecord']}/subjects"
             try:
                 lst_disc = json.loads(json.dumps(requests.get(url_disc, headers=headers).json()))
@@ -117,6 +120,7 @@ class Curso():
         cursos = Curso().get('','Graduação')
         matrizes = {}
         for c in cursos:
+            print(f"Currículos do curso {c['name']}")
             id_course = c['idCourse']
             courseName = c['name']
             # ras = RegistrosAcademicos().getByCourse(courseName)
@@ -286,8 +290,9 @@ class Alunos():
 
 def normalizarMatriculas(matriculas):
     alunos = {}
-    # i = 0
+    i = 0
     for m in matriculas:
+        print(indent('Varrendo matrículas recuperadas...', prefix = '   ', predicate=None))
         mc = Matriculas().get(m['idEnrollment'])
         if m['idPerson'] in alunos:
             alunos[m['idPerson']]['matriculas'].append(m)
@@ -300,21 +305,27 @@ def normalizarMatriculas(matriculas):
         else:
             
             dia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
-            alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': '','nomeCurso':m['courseName'], 'dtmat': dia[0] if len(dia) > 0 else ''}
+            alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': '','idCurriculum': '', 'nomeCurso':m['courseName'], 'dtmat': dia[0] if len(dia) > 0 else ''}
             alunos[m['idPerson']]['matriculas'] = [m]
-        # i += 1
-        # if i > 10:
-        #     break
+        i += 1
+        print(indent(f"Matrícula {i}", prefix = '       ', predicate=None))
+        if i > 2:
+            break
     return alunos
 
+
+calendarios = [2528, 2965]
+print('Recuperando matrículas das Campanhas...')
 matriculas = []
 for c in calendarios:
     matriculas = matriculas + Campanhas().getCampanhaMatriculas(c)
+print('Recuperando matrizes dos cursos...')
 matrizes = Curso().getGraduacaoCurriculos()
 
+print('Vinculando matrículas aos alunos...')
 alunos = normalizarMatriculas(matriculas)
 # alunos = Alunos().get()
-
+print('Recuperando registros acadêmicos dos alunos...')
 i=1
 tam = len(alunos)
 # continua daqui
@@ -322,10 +333,12 @@ for aluno in alunos:
     alunos[aluno]['registros'] = RegistrosAcademicos().getByPerson(alunos[aluno]['idPerson'])
     print(f"{i} de {tam}" )
     i = i+1
-    # if i==10:
-    #     break
-    
+    if i==3:
+        break
+
+print('Construíndo a tabela de dependências finais...')    
 alunos = Alunos().buildDependencias(alunos, matrizes)
+print('Salvando resultado...')
 file_path = "novoalunos.json"
 
 # Open the file in write mode and write the JSON data
@@ -334,7 +347,3 @@ with open(file_path, "w") as json_file:
 
 print("JSON data saved to:", file_path)
 
-print(alunos)
-
-
-print(matrizes)
