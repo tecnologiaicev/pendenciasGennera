@@ -265,17 +265,18 @@ class Alunos():
             
             # Iterate through each enrollment record
             for enrollment_record in enrollment_records:
-                disciplinas = enrollment_record['disciplinas']
-                # Check if the enrollment status is "APPROVED"
-                for disciplina in disciplinas:    
-                    if disciplina["status"] == "APPROVED":
-                        # Add the subject to the list of completed subjects
-                        completed_subject = {
-                            "subjectName": disciplina["subjectName"],
-                            "workload": disciplina["workload"],
-                            "average": disciplina["average"]
-                        }
-                        student_data["completed_subjects"].append(completed_subject)
+                if 'disciplinas' in enrollment_record:
+                    disciplinas = enrollment_record['disciplinas']
+                    # Check if the enrollment status is "APPROVED"
+                    for disciplina in disciplinas:    
+                        if disciplina["status"] == "APPROVED":
+                            # Add the subject to the list of completed subjects
+                            completed_subject = {
+                                "subjectName": disciplina["subjectName"],
+                                "workload": disciplina["workload"],
+                                "average": disciplina["average"]
+                            }
+                            student_data["completed_subjects"].append(completed_subject)
             
             # Ajustar pegando o resultado da disciplina no diário
             enrollment_records = student_info.get("matriculas", [])
@@ -342,12 +343,12 @@ def normalizarMatriculas(matriculas):
             alunos[m['idPerson']]['matriculas'] = [m]
         i += 1
         print(indent(f"Matrícula {i}", prefix = '       ', predicate=None))
-        if i > 2:
-            break
-    return alunos
+    #     if i > 2:
+    #         break
+    # return alunos
 
 
-calendarios = [2528, 2965]
+# calendarios = [2528, 2965]
 print('Recuperando matrículas das Campanhas...')
 matriculas = []
 for c in calendarios:
@@ -366,8 +367,8 @@ for aluno in alunos:
     alunos[aluno]['registros'] = RegistrosAcademicos().getByPerson(alunos[aluno]['idPerson'])
     print(f"{i} de {tam}" )
     i = i+1
-    if i==3:
-        break
+    # if i==3:
+    #     break
 
 print('Construíndo a tabela de dependências finais...')    
 alunos = Alunos().buildDependencias(alunos, matrizes)
