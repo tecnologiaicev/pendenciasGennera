@@ -281,17 +281,18 @@ class Alunos():
             # Ajustar pegando o resultado da disciplina no diário
             enrollment_records = student_info.get("matriculas", [])
             for enrollment_record in enrollment_records:
-                disciplinas = enrollment_record['disciplinas']
-                # Check if the enrollment status is "APPROVED"
-                for disciplina in disciplinas:    
-                    if disciplina["status"] == "APPROVED":
-                        # Add the subject to the list of completed subjects
-                        completed_subject = {
-                            "subjectName": disciplina["subjectName"],
-                            "workload": disciplina["workload"],
-                            "average": disciplina["average"]
-                        }
-                        student_data["completed_subjects"].append(completed_subject)
+                if 'disciplinas' in enrollment_record:
+                    disciplinas = enrollment_record['disciplinas']
+                    # Check if the enrollment status is "APPROVED"
+                    for disciplina in disciplinas:    
+                        if disciplina["status"] == "APPROVED":
+                            # Add the subject to the list of completed subjects
+                            completed_subject = {
+                                "subjectName": disciplina["subjectName"],
+                                "workload": disciplina["workload"],
+                                "average": disciplina["average"]
+                            }
+                            student_data["completed_subjects"].append(completed_subject)
                         
             # Get the curriculum for the current student's course
             student_info["idCourse"] = Curso().getCursoByName(student_info['nomeCurso'])['idCourse']
