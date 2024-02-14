@@ -346,7 +346,7 @@ def normalizarMatriculas(matriculas):
         print(indent(f"Matrícula {i}", prefix = '       ', predicate=None))
     #     if i > 2:
     #         break
-    # return alunos
+    return alunos
 
 
 # calendarios = [2528, 2965]
