@@ -269,7 +269,7 @@ class Alunos():
                     disciplinas = enrollment_record['disciplinas']
                     # Check if the enrollment status is "APPROVED"
                     for disciplina in disciplinas:    
-                        if disciplina["status"] == "APPROVED":
+                        if disciplina['status'] == "APPROVED":
                             # Add the subject to the list of completed subjects
                             completed_subject = {
                                 "subjectName": disciplina["subjectName"],
@@ -298,7 +298,7 @@ class Alunos():
             student_info["idCourse"] = Curso().getCursoByName(student_info['nomeCurso'])['idCourse']
             curricula = matrizes.get(student_info["idCourse"], {}).get("curriculos", [])
             # verificar se existem 2 matrizes aqui e checar o preenchimento do idCurriculum anteriormente.
-            curriculum = [c for c in curricula if c['idCurriculum'] == student_info['idCurriculum']] 
+            curriculum = [c for c in curricula if c['idCurriculum'] == student_info['idCurriculumAtual']] 
             # curriculum = matrizes.get(student_info["nomeCurso"], {}).get("curriculos", [])
             
             # Iterate through each curriculum
@@ -325,6 +325,7 @@ class Alunos():
 def normalizarMatriculas(matriculas):
     alunos = {}
     i = 0
+    total = len(matriculas)
     for m in matriculas:
         print(indent('Varrendo matrículas recuperadas...', prefix = '   ', predicate=None))
         mc = Matriculas().get(m['idEnrollment'])
@@ -345,7 +346,7 @@ def normalizarMatriculas(matriculas):
             alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'nomeCurso':m['courseName'], 'idCurriculumAtual': m['idCurriculum'], 'curriculos': [m['idCurriculum']], 'dtmat': dia[0] if len(dia) > 0 else ''}
             alunos[m['idPerson']]['matriculas'] = [m]
         i += 1
-        print(indent(f"Matrícula {i}", prefix = '       ', predicate=None))
+        print(indent(f"Matrícula {i} de {total}", prefix = '       ', predicate=None))
     #     if i > 2:
     #         break
     return alunos
