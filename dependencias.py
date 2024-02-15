@@ -297,6 +297,7 @@ class Alunos():
             # Get the curriculum for the current student's course
             student_info["idCourse"] = Curso().getCursoByName(student_info['nomeCurso'])['idCourse']
             curricula = matrizes.get(student_info["idCourse"], {}).get("curriculos", [])
+            # verificar se existem 2 matrizes aqui e checar o preenchimento do idCurriculum anteriormente.
             curriculum = [c for c in curricula if c['idCurriculum'] == student_info['idCurriculum']] 
             # curriculum = matrizes.get(student_info["nomeCurso"], {}).get("curriculos", [])
             
@@ -336,11 +337,12 @@ def normalizarMatriculas(matriculas):
                         alunos[m['idPerson']]['dtmat'] = ndia[0]
                         alunos[m['idPerson']]['idCourse'] = Curso().getCursoByName(m['courseName'])['idCourse']
                         alunos[m['idPerson']]['nomeCurso'] = m['courseName']
-                        alunos[m['idPerson']]['idCurriculum'] = m['idCurriculum']
+                        alunos[m['idPerson']]['idCurriculumAtual'] = m['idCurriculum']
+                        alunos[m['idPerson']]['curriculos'].append(m['idCurriculum'])
         else:
             
             dia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
-            alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'idCurriculum': m['idCurriculum'], 'nomeCurso':m['courseName'], 'dtmat': dia[0] if len(dia) > 0 else ''}
+            alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'nomeCurso':m['courseName'], 'idCurriculumAtual': m['idCurriculum'], 'curriculos': [m['idCurriculum']], 'dtmat': dia[0] if len(dia) > 0 else ''}
             alunos[m['idPerson']]['matriculas'] = [m]
         i += 1
         print(indent(f"Matrícula {i}", prefix = '       ', predicate=None))
