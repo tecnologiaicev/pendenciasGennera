@@ -1,5 +1,5 @@
-novoalunos.json
-data.json
+./novoalunos.json
+./data.json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
