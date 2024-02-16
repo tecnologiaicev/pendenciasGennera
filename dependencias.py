@@ -156,16 +156,26 @@ class Curriculo():
             lst_curriculos = json.loads(json.dumps(requests.get(url_curriculos, headers=headers).json()))
         except Exception as e:
             return e
-        for m in lst_curriculos:
-            lst_periodos = Modulo().get(curso_id,m['idCurriculum'])
+        if curriculo_id == '':
+            for m in lst_curriculos:
+                lst_periodos = Modulo().get(curso_id, m['idCurriculum'])
+                lst_periodos = sorted(lst_periodos, key=lambda x: x['index'])
+                m['modules'] = []
+                for p in lst_periodos:
+                    d = Disciplinas()
+                    disc = d.get(curso_id,m['idCurriculum'],p['idModule'])
+                    p['disciplinas'] = disc
+                    m['modules'].append(p)
+        else:
+            lst_periodos = Modulo().get(curso_id, lst_curriculos['idCurriculum'])
             lst_periodos = sorted(lst_periodos, key=lambda x: x['index'])
-            m['modules'] = []
+            lst_curriculos['modules'] = []
             for p in lst_periodos:
                 d = Disciplinas()
-                disc = d.get(curso_id,m['idCurriculum'],p['idModule'])
+                disc = d.get(curso_id,lst_curriculos['idCurriculum'],p['idModule'])
                 p['disciplinas'] = disc
-                m['modules'].append(p)
-                
+                lst_curriculos['modules'].append(p)
+            
         return lst_curriculos        
 
 class Disciplinas():
@@ -195,14 +205,26 @@ class Campanhas():
                 lst_matriculas = json.loads(json.dumps(requests.get(url_matriculas, headers=headers).json()))
             except Exception as e:
                 return e
-            matriculas = matriculas + [m for m in lst_matriculas if m['status']=='active']
-        # print(indent('Adicionando disciplinas das matrículas',prefix='  ', predicate=None))
-        # i = 1
-        # for m in matriculas:
-        #     m['disciplinas'] = Matriculas().getDisciplinas(m['idEnrollment'])
-        #     print(indent(f"Registro {i} de {len(matriculas)}    ",prefix='      ', predicate=None), end='\r')
-        #     i += 1
-        # print('')
+            print(indent('Adicionando disciplinas das matrículas',prefix='  ', predicate=None))
+            i = 1
+            for m in lst_matriculas:
+                # if m['courseName'] == '02 - Bacharelado em Administração':
+                print(indent(f"Matrícula {i} de {len(lst_matriculas)}    ",prefix='    ', predicate=None))
+                if m['status'] == 'active':
+                    m['disciplinas'] = Matriculas().getDisciplinas(m['idEnrollment'])
+                    # j = 1
+                    l_disc = []
+                    for d in m['disciplinas']:
+                        if d['status'] == 'active':
+                            l_disc.append(d)
+                        if ('complementName' in d) or ('equivalence' in d):
+                            print('a') 
+                    # print(indent(f"Registro {j} de {len(m['disciplinas'])}    ",prefix='      ', predicate=None), end='\r')
+                    # j += 1
+                    matriculas = matriculas + l_disc
+                i += 1
+                    
+        
         return matriculas
     
     def filterByCourse(self, campanhas, curso_nome):
@@ -256,6 +278,8 @@ class Alunos():
             student_data = {
                 "idPerson": student_info["idPerson"],
                 "name": student_info["name"],
+                "course": student_info["nomeCurso"],
+                "matriz":Curriculo().get(student_info['idCourse'], student_info['idCurriculumAtual']),
                 "completed_subjects": [],
                 "remaining_subjects": []
             }
@@ -322,6 +346,21 @@ class Alunos():
         # Print the result JSON
         return result_json
 
+
+def testeTOTVS():
+    auth = ("ricardo.sekeff","Jfsb@102628")
+    
+    headers = {
+        "Content-Type": "application/json"
+    }
+    
+    url_registros = f"https://grupoeducacional127611.rm.cloudtotvs.com.br:8051/api/framework/v1/consultaSQLServer/RealizaConsulta/API.EDU.001/0/S/?parameters=CODCOLIGADA=4;ANO_LETIVO=2024.1;FILTRO=%"
+    lst_registros = json.loads(json.dumps(requests.get(url_registros, headers=headers, auth=auth).json()))
+    for r in lst_registros:
+        print(f"{r['RA']} - {r['NOMEALUNO']}")
+    return lst_registros
+    
+
 def normalizarMatriculas(matriculas):
     alunos = {}
     i = 0
@@ -347,10 +386,11 @@ def normalizarMatriculas(matriculas):
             alunos[m['idPerson']]['matriculas'] = [m]
         i += 1
         print(indent(f"Matrícula {i} de {total}", prefix = '       ', predicate=None))
-    #     if i > 2:
-    #         break
+        # if i > 2:
+        #     break
     return alunos
 
+# testeTOTVS()
 
 # calendarios = [2528, 2965]
 print('Recuperando matrículas das Campanhas...')
