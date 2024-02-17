@@ -208,6 +208,8 @@ class Campanhas():
             print(indent('Adicionando disciplinas das matrículas',prefix='  ', predicate=None))
             i = 1
             for m in lst_matriculas:
+                # if i > 10:
+                #     break
                 # if m['courseName'] == '02 - Bacharelado em Administração':
                 print(indent(f"Matrícula {i} de {len(lst_matriculas)}    ",prefix='    ', predicate=None))
                 if m['status'] == 'active':
@@ -215,6 +217,7 @@ class Campanhas():
                         m['disciplinas'] = Matriculas().getDisciplinas(m['idEnrollment'])
                         # j = 1
                         l_disc = []
+
                         for d in m['disciplinas']:
                             if d['status'] == 'active':
                                 l_disc.append(d)
@@ -222,7 +225,8 @@ class Campanhas():
                                 print('a') 
                         # print(indent(f"Registro {j} de {len(m['disciplinas'])}    ",prefix='      ', predicate=None), end='\r')
                         # j += 1
-                        matriculas = matriculas + l_disc
+                        m['disciplinas'] = l_disc
+                        # matriculas = matriculas + l_disc
                     else:
                         print(m)
                 i += 1
@@ -390,7 +394,7 @@ def normalizarMatriculas(matriculas):
                 alunos[m['idPerson']]['matriculas'] = [m]
             i += 1
             print(indent(f"Matrícula {i} de {total}", prefix = '       ', predicate=None))
-            # if i > 2:
+            # if i > 3:
             #     break
         else:
             print(m)
@@ -417,8 +421,8 @@ for aluno in alunos:
     alunos[aluno]['registros'] = RegistrosAcademicos().getByPerson(alunos[aluno]['idPerson'])
     print(f"{i} de {tam}" )
     i = i+1
-    # if i==3:
-    #     break
+    if i==3:
+        break
 
 print('Construíndo a tabela de dependências finais...')    
 alunos = Alunos().buildDependencias(alunos, matrizes)
