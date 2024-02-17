@@ -10,6 +10,8 @@ headers = {
     "x-access-token" : "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJuYW1lIjoiVGVjbm9sb2dpYSBpQ0VWIiwidXNlcm5hbWUiOiJ0ZWNub2xvZ2lhQHNvbW9zaWNldi5jb20iLCJoYXNoIjoiUGpMcFZJUlM5a0hkbGROWG1pS3Zqb1kzbDhHc3VQcU5zWHNKV0l2WiIsImlkVXNlciI6MTY2ODg5OSwiaWRDb3VudHJ5IjozMiwiaWRMYW5ndWFnZSI6MiwibGFuZ3VhZ2VDb2RlIjoicHQiLCJpZFRpbWV6b25lIjoxMTMsImlhdCI6MTYyNTYwOTI3OCwiaXNzIjoiaHR0cDovL2FwcHMuZ2VubmVyYS5jb20uYnIiLCJzdWIiOiJ0ZWNub2xvZ2lhQHNvbW9zaWNldi5jb20ifQ.jm_uCOeY_bNAv3rK0nIce-O3HmaLOap4kYgBMszz1EvVSxn558WR-_6xQG39O8TxT3pcTSZA89eAbtNTl3CF17Y1d0LNcJf3c6OJjQlt2hRR9Y0vLSfbPEm9KOxM-Opf58zQh2Y94zR42DopEsX_M1fmsVGC6yJCBz2jRq3zd3A6PSAiqnLOAKKVFEIXH2HoyGLCW9unvr0hWBcdA5Y0tVS6ZiKXwUQ_SQxuB5FPStskXnegV1VPWusPpMk9rJjpwg-ClLVsmAwHHRmeNxU2AncoWLmhkXh0MO3786tS1OlA3YuxVNzO20kIDOFGfPZt_NzEtOOHEF7CzIKFzrtOm5yW0jWCGt9duS3leY7OWpP56ogDgrDZSd0Pql6eUXrXZPryUHR4vMVDXEZsLzXinjm8lH6Kvy72LgJw3HlP0OCQi4WkkCgN-uDOcwyn8RJLv5nYSo0oqO2HAs6Aq3JUigg4QVMMX76j7NnDWBsyxYZ2mHwJnh0ylrXXkVL0zk9Dw3HewRJq4t3xehZr2eP-XnCp6TXbskLSB3wZAO1VnU_dZDYVKWuh_KZWcmZI8_quEV5SLCQ0A6LU_zbS5qmoa6sYxy6r1BC-ZJFeHiRVEMICbBL-dXQhZ4rH4f1DGhDoYDPAB7myT_D_Ylg-Wce1JltCZL1fk_gsOxveZNhZKOU"
 }
 
+DEBUG = True
+
 class RegistrosAcademicos():
     def get(self):
         url_registros = f"https://api2.gennera.com.br/institutions/64/enrollmentRecords"
@@ -208,8 +210,9 @@ class Campanhas():
             print(indent('Adicionando disciplinas das matrículas',prefix='  ', predicate=None))
             i = 1
             for m in lst_matriculas:
-                # if i > 10:
-                #     break
+                if DEBUG:
+                    if i > 10:
+                        break
                 # if m['courseName'] == '02 - Bacharelado em Administração':
                 print(indent(f"Matrícula {i} de {len(lst_matriculas)}    ",prefix='    ', predicate=None))
                 if m['status'] == 'active':
@@ -226,7 +229,7 @@ class Campanhas():
                         # print(indent(f"Registro {j} de {len(m['disciplinas'])}    ",prefix='      ', predicate=None), end='\r')
                         # j += 1
                         m['disciplinas'] = l_disc
-                        # matriculas = matriculas + l_disc
+                        matriculas = matriculas + [m]
                     else:
                         print(m)
                 i += 1
@@ -394,15 +397,17 @@ def normalizarMatriculas(matriculas):
                 alunos[m['idPerson']]['matriculas'] = [m]
             i += 1
             print(indent(f"Matrícula {i} de {total}", prefix = '       ', predicate=None))
-            # if i > 3:
-            #     break
+            if DEBUG:
+                if i > 3:
+                    break
         else:
             print(m)
     return alunos
 
 # testeTOTVS()
-
-# calendarios = [2528, 2965]
+if DEBUG:
+    calendarios = [2528, 2965]
+    print('====== MODO DEBUG =====')
 print('Recuperando matrículas das Campanhas...')
 matriculas = []
 for c in calendarios:
