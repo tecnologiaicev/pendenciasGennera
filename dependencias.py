@@ -378,29 +378,29 @@ def normalizarMatriculas(matriculas):
     for m in matriculas:
         print(indent('Varrendo matrículas recuperadas...', prefix = '   ', predicate=None))
         if 'idEnrollment' in m:
-            if m['idPerson'] == 145768: 
-                mc = Matriculas().get(m['idEnrollment'])
-                if m['idPerson'] in alunos:
-                    alunos[m['idPerson']]['matriculas'].append(m)
-                    if m['courseName'] != alunos[m['idPerson']]['nomeCurso']:
-                        ndia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
-                        if len(ndia) > 0:
-                            if ndia[0] > alunos[m['idPerson']]['dtmat']:
-                                alunos[m['idPerson']]['dtmat'] = ndia[0]
-                                alunos[m['idPerson']]['idCourse'] = Curso().getCursoByName(m['courseName'])['idCourse']
-                                alunos[m['idPerson']]['nomeCurso'] = m['courseName']
-                                alunos[m['idPerson']]['idCurriculumAtual'] = m['idCurriculum']
-                                alunos[m['idPerson']]['curriculos'].append(m['idCurriculum'])
-                else:
-                    
-                    dia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
-                    alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'nomeCurso':m['courseName'], 'idCurriculumAtual': m['idCurriculum'], 'curriculos': [m['idCurriculum']], 'dtmat': dia[0] if len(dia) > 0 else ''}
-                    alunos[m['idPerson']]['matriculas'] = [m]
-                i += 1
-                print(indent(f"Matrícula {i} de {total}", prefix = '       ', predicate=None))
-                if DEBUG:
-                    if i > 3:
-                        break
+#            if m['idPerson'] == 145768: 
+            mc = Matriculas().get(m['idEnrollment'])
+            if m['idPerson'] in alunos:
+                alunos[m['idPerson']]['matriculas'].append(m)
+                if m['courseName'] != alunos[m['idPerson']]['nomeCurso']:
+                    ndia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
+                    if len(ndia) > 0:
+                        if ndia[0] > alunos[m['idPerson']]['dtmat']:
+                            alunos[m['idPerson']]['dtmat'] = ndia[0]
+                            alunos[m['idPerson']]['idCourse'] = Curso().getCursoByName(m['courseName'])['idCourse']
+                            alunos[m['idPerson']]['nomeCurso'] = m['courseName']
+                            alunos[m['idPerson']]['idCurriculumAtual'] = m['idCurriculum']
+                            alunos[m['idPerson']]['curriculos'].append(m['idCurriculum'])
+            else:
+                
+                dia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
+                alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'nomeCurso':m['courseName'], 'idCurriculumAtual': m['idCurriculum'], 'curriculos': [m['idCurriculum']], 'dtmat': dia[0] if len(dia) > 0 else ''}
+                alunos[m['idPerson']]['matriculas'] = [m]
+            i += 1
+            print(indent(f"Matrícula {i} de {total}", prefix = '       ', predicate=None))
+            if DEBUG:
+                if i > 3:
+                    break
         else:
             print(m)
     return alunos
@@ -410,7 +410,7 @@ if DEBUG:
     calendarios = [2528, 2965]
     print('====== MODO DEBUG =====')
 print('Recuperando matrículas das Campanhas...')
-calendarios = [1244,1498,3795,1847,1876,2248,2528,2965,3224,3629]
+#calendarios = [1244,1498,3795,1847,1876,2248,2528,2965,3224,3629]
 matriculas = []
 i = 0
 for c in calendarios:
