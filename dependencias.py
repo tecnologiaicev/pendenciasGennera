@@ -10,7 +10,7 @@ headers = {
     "x-access-token" : "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJuYW1lIjoiVGVjbm9sb2dpYSBpQ0VWIiwidXNlcm5hbWUiOiJ0ZWNub2xvZ2lhQHNvbW9zaWNldi5jb20iLCJoYXNoIjoiUGpMcFZJUlM5a0hkbGROWG1pS3Zqb1kzbDhHc3VQcU5zWHNKV0l2WiIsImlkVXNlciI6MTY2ODg5OSwiaWRDb3VudHJ5IjozMiwiaWRMYW5ndWFnZSI6MiwibGFuZ3VhZ2VDb2RlIjoicHQiLCJpZFRpbWV6b25lIjoxMTMsImlhdCI6MTYyNTYwOTI3OCwiaXNzIjoiaHR0cDovL2FwcHMuZ2VubmVyYS5jb20uYnIiLCJzdWIiOiJ0ZWNub2xvZ2lhQHNvbW9zaWNldi5jb20ifQ.jm_uCOeY_bNAv3rK0nIce-O3HmaLOap4kYgBMszz1EvVSxn558WR-_6xQG39O8TxT3pcTSZA89eAbtNTl3CF17Y1d0LNcJf3c6OJjQlt2hRR9Y0vLSfbPEm9KOxM-Opf58zQh2Y94zR42DopEsX_M1fmsVGC6yJCBz2jRq3zd3A6PSAiqnLOAKKVFEIXH2HoyGLCW9unvr0hWBcdA5Y0tVS6ZiKXwUQ_SQxuB5FPStskXnegV1VPWusPpMk9rJjpwg-ClLVsmAwHHRmeNxU2AncoWLmhkXh0MO3786tS1OlA3YuxVNzO20kIDOFGfPZt_NzEtOOHEF7CzIKFzrtOm5yW0jWCGt9duS3leY7OWpP56ogDgrDZSd0Pql6eUXrXZPryUHR4vMVDXEZsLzXinjm8lH6Kvy72LgJw3HlP0OCQi4WkkCgN-uDOcwyn8RJLv5nYSo0oqO2HAs6Aq3JUigg4QVMMX76j7NnDWBsyxYZ2mHwJnh0ylrXXkVL0zk9Dw3HewRJq4t3xehZr2eP-XnCp6TXbskLSB3wZAO1VnU_dZDYVKWuh_KZWcmZI8_quEV5SLCQ0A6LU_zbS5qmoa6sYxy6r1BC-ZJFeHiRVEMICbBL-dXQhZ4rH4f1DGhDoYDPAB7myT_D_Ylg-Wce1JltCZL1fk_gsOxveZNhZKOU"
 }
 
-DEBUG = True
+DEBUG = False
 
 class RegistrosAcademicos():
     def get(self):
@@ -207,14 +207,14 @@ class Campanhas():
                 lst_matriculas = json.loads(json.dumps(requests.get(url_matriculas, headers=headers).json()))
             except Exception as e:
                 return e
-            print(indent('Adicionando disciplinas das matrículas',prefix='  ', predicate=None))
+            # print(indent('Adicionando disciplinas das matrículas',prefix='  ', predicate=None))
             i = 1
             for m in lst_matriculas:
                 if DEBUG:
                     if i > 10:
                         break
                 # if m['courseName'] == '02 - Bacharelado em Administração':
-                print(indent(f"Matrícula {i} de {len(lst_matriculas)}    ",prefix='    ', predicate=None))
+                print(indent(f"Matrícula {i} de {len(lst_matriculas)}                   ",prefix='    ', predicate=None), end = '\r')
                 if m['status'] == 'active':
                     if 'idEnrollment' in m:
                         m['disciplinas'] = Matriculas().getDisciplinas(m['idEnrollment'])
@@ -377,29 +377,30 @@ def normalizarMatriculas(matriculas):
     total = len(matriculas)
     for m in matriculas:
         print(indent('Varrendo matrículas recuperadas...', prefix = '   ', predicate=None))
-        if 'idEnrollment' in m: 
-            mc = Matriculas().get(m['idEnrollment'])
-            if m['idPerson'] in alunos:
-                alunos[m['idPerson']]['matriculas'].append(m)
-                if m['courseName'] != alunos[m['idPerson']]['nomeCurso']:
-                    ndia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
-                    if len(ndia) > 0:
-                        if ndia[0] > alunos[m['idPerson']]['dtmat']:
-                            alunos[m['idPerson']]['dtmat'] = ndia[0]
-                            alunos[m['idPerson']]['idCourse'] = Curso().getCursoByName(m['courseName'])['idCourse']
-                            alunos[m['idPerson']]['nomeCurso'] = m['courseName']
-                            alunos[m['idPerson']]['idCurriculumAtual'] = m['idCurriculum']
-                            alunos[m['idPerson']]['curriculos'].append(m['idCurriculum'])
-            else:
-                
-                dia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
-                alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'nomeCurso':m['courseName'], 'idCurriculumAtual': m['idCurriculum'], 'curriculos': [m['idCurriculum']], 'dtmat': dia[0] if len(dia) > 0 else ''}
-                alunos[m['idPerson']]['matriculas'] = [m]
-            i += 1
-            print(indent(f"Matrícula {i} de {total}", prefix = '       ', predicate=None))
-            if DEBUG:
-                if i > 3:
-                    break
+        if 'idEnrollment' in m:
+            if m['idPerson'] == 145768: 
+                mc = Matriculas().get(m['idEnrollment'])
+                if m['idPerson'] in alunos:
+                    alunos[m['idPerson']]['matriculas'].append(m)
+                    if m['courseName'] != alunos[m['idPerson']]['nomeCurso']:
+                        ndia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
+                        if len(ndia) > 0:
+                            if ndia[0] > alunos[m['idPerson']]['dtmat']:
+                                alunos[m['idPerson']]['dtmat'] = ndia[0]
+                                alunos[m['idPerson']]['idCourse'] = Curso().getCursoByName(m['courseName'])['idCourse']
+                                alunos[m['idPerson']]['nomeCurso'] = m['courseName']
+                                alunos[m['idPerson']]['idCurriculumAtual'] = m['idCurriculum']
+                                alunos[m['idPerson']]['curriculos'].append(m['idCurriculum'])
+                else:
+                    
+                    dia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
+                    alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'nomeCurso':m['courseName'], 'idCurriculumAtual': m['idCurriculum'], 'curriculos': [m['idCurriculum']], 'dtmat': dia[0] if len(dia) > 0 else ''}
+                    alunos[m['idPerson']]['matriculas'] = [m]
+                i += 1
+                print(indent(f"Matrícula {i} de {total}", prefix = '       ', predicate=None))
+                if DEBUG:
+                    if i > 3:
+                        break
         else:
             print(m)
     return alunos
@@ -409,8 +410,12 @@ if DEBUG:
     calendarios = [2528, 2965]
     print('====== MODO DEBUG =====')
 print('Recuperando matrículas das Campanhas...')
+calendarios = [1244,1498,3795,1847,1876,2248,2528,2965,3224,3629]
 matriculas = []
+i = 0
 for c in calendarios:
+    i += 1
+    print(f"\nCalendário {i} de {len(calendarios)}                      ")
     matriculas = matriculas + Campanhas().getCampanhaMatriculas(c)
 print('Recuperando matrizes dos cursos...')
 matrizes = Curso().getGraduacaoCurriculos()
