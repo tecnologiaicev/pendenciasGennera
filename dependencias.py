@@ -281,9 +281,11 @@ class Alunos():
     def buildDependencias(self, alunos, matrizes):
         # Initialize an empty dictionary to store the result
         result_json = {}
-
+        i = 0
         # Iterate through each student in the 'alunos' JSON
         for student_id, student_info in alunos.items():
+            i += 1
+            print(f"Construindo dependências. Registro {i} de {len(alunos)}...            ", end='\r')
             # Initialize a dictionary for the current student
             student_data = {
                 "idPerson": student_info["idPerson"],
@@ -431,8 +433,9 @@ for aluno in alunos:
     alunos[aluno]['registros'] = RegistrosAcademicos().getByPerson(alunos[aluno]['idPerson'])
     print(f"{i} de {tam}" )
     i = i+1
-    if i==3:
-        break
+    if DEBUG:
+        if i==3:
+            break
 
 print('Construíndo a tabela de dependências finais...')    
 alunos = Alunos().buildDependencias(alunos, matrizes)
