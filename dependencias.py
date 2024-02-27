@@ -4,13 +4,19 @@ from sys import prefix
 import datetime as dt
 from datetime import datetime
 from dateutil import parser, tz
+from flask import Flask, redirect, jsonify, render_template, request
+import json
+from datetime import datetime, timedelta
+
+app = Flask(__name__)
+
 calendarios = [2528, 2965, 3315, 3224, 3629, 4400, 4283, 5041, 5190, 6460, 5992, 7073, 7394]
 
 headers = {
     "x-access-token" : "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9.eyJuYW1lIjoiVGVjbm9sb2dpYSBpQ0VWIiwidXNlcm5hbWUiOiJ0ZWNub2xvZ2lhQHNvbW9zaWNldi5jb20iLCJoYXNoIjoiUGpMcFZJUlM5a0hkbGROWG1pS3Zqb1kzbDhHc3VQcU5zWHNKV0l2WiIsImlkVXNlciI6MTY2ODg5OSwiaWRDb3VudHJ5IjozMiwiaWRMYW5ndWFnZSI6MiwibGFuZ3VhZ2VDb2RlIjoicHQiLCJpZFRpbWV6b25lIjoxMTMsImlhdCI6MTYyNTYwOTI3OCwiaXNzIjoiaHR0cDovL2FwcHMuZ2VubmVyYS5jb20uYnIiLCJzdWIiOiJ0ZWNub2xvZ2lhQHNvbW9zaWNldi5jb20ifQ.jm_uCOeY_bNAv3rK0nIce-O3HmaLOap4kYgBMszz1EvVSxn558WR-_6xQG39O8TxT3pcTSZA89eAbtNTl3CF17Y1d0LNcJf3c6OJjQlt2hRR9Y0vLSfbPEm9KOxM-Opf58zQh2Y94zR42DopEsX_M1fmsVGC6yJCBz2jRq3zd3A6PSAiqnLOAKKVFEIXH2HoyGLCW9unvr0hWBcdA5Y0tVS6ZiKXwUQ_SQxuB5FPStskXnegV1VPWusPpMk9rJjpwg-ClLVsmAwHHRmeNxU2AncoWLmhkXh0MO3786tS1OlA3YuxVNzO20kIDOFGfPZt_NzEtOOHEF7CzIKFzrtOm5yW0jWCGt9duS3leY7OWpP56ogDgrDZSd0Pql6eUXrXZPryUHR4vMVDXEZsLzXinjm8lH6Kvy72LgJw3HlP0OCQi4WkkCgN-uDOcwyn8RJLv5nYSo0oqO2HAs6Aq3JUigg4QVMMX76j7NnDWBsyxYZ2mHwJnh0ylrXXkVL0zk9Dw3HewRJq4t3xehZr2eP-XnCp6TXbskLSB3wZAO1VnU_dZDYVKWuh_KZWcmZI8_quEV5SLCQ0A6LU_zbS5qmoa6sYxy6r1BC-ZJFeHiRVEMICbBL-dXQhZ4rH4f1DGhDoYDPAB7myT_D_Ylg-Wce1JltCZL1fk_gsOxveZNhZKOU"
 }
 
-DEBUG = False
+DEBUG = True
 
 class RegistrosAcademicos():
     def get(self):
@@ -211,7 +217,7 @@ class Campanhas():
             i = 1
             for m in lst_matriculas:
                 if DEBUG:
-                    if i > 10:
+                    if i > 20:
                         break
                 # if m['courseName'] == '02 - Bacharelado em Administração':
                 print(indent(f"Matrícula {i} de {len(lst_matriculas)}                   ",prefix='    ', predicate=None), end = '\r')
@@ -293,13 +299,14 @@ class Alunos():
                 "course": student_info["nomeCurso"],
                 "matriz":Curriculo().get(student_info['idCourse'], student_info['idCurriculumAtual']),
                 "completed_subjects": [],
+                "failed_subjects": [],
                 "remaining_subjects": []
             }
             
             # Get the enrollment records for the current student
             enrollment_records = student_info.get("registros", [])
             
-            # Iterate through each enrollment record
+            # Monta a lista de disciplinas integralizadas
             for enrollment_record in enrollment_records:
                 if 'disciplinas' in enrollment_record:
                     disciplinas = enrollment_record['disciplinas']
@@ -314,8 +321,25 @@ class Alunos():
                             }
                             student_data["completed_subjects"].append(completed_subject)
             
+            # Monta a lista de disciplinas reprovadas e não cursadas
+            for enrollment_record in enrollment_records:
+                if 'disciplinas' in enrollment_record:
+                    disciplinas = enrollment_record['disciplinas']
+                    # Check if the enrollment status is "APPROVED"
+                    for disciplina in disciplinas:    
+                        if (disciplina['status'] == "FAILED") and \
+                            disciplina['subjectName'] not in ([sub["subjectName"] for sub in student_data["completed_subjects"]]):
+                            # Add the subject to the list of completed subjects
+                                failed_subject = {
+                                "subjectName": disciplina["subjectName"],
+                                "workload": disciplina["workload"],
+                                "average": disciplina["average"]
+                            }
+                                student_data["failed_subjects"].append(failed_subject)
+            
             # Ajustar pegando o resultado da disciplina no diário
             enrollment_records = student_info.get("matriculas", [])
+            
             for enrollment_record in enrollment_records:
                 if 'disciplinas' in enrollment_record:
                     disciplinas = enrollment_record['disciplinas']
@@ -329,7 +353,20 @@ class Alunos():
                                 "average": disciplina["average"]
                             }
                             student_data["completed_subjects"].append(completed_subject)
-                        
+            
+            for enrollment_record in enrollment_records:
+                if 'disciplinas' in enrollment_record:
+                    disciplinas = enrollment_record['disciplinas']
+                    # Check if the enrollment status is "APPROVED"
+                    for disciplina in disciplinas:    
+                            if (disciplina['status'] == "FAILED") and \
+                                    disciplina['subjectName'] not in ([sub["subjectName"] for sub in student_data["completed_subjects"]]):
+                                failed_subject = {
+                                "subjectName": disciplina["subjectName"],
+                                "workload": disciplina["workload"],
+                                "average": disciplina["average"]
+                            }
+                                student_data["failed_subjects"].append(failed_subject)                                
             # Get the curriculum for the current student's course
             student_info["idCourse"] = Curso().getCursoByName(student_info['nomeCurso'])['idCourse']
             curricula = matrizes.get(student_info["idCourse"], {}).get("curriculos", [])
@@ -342,16 +379,19 @@ class Alunos():
                 # Iterate through each module in the curriculum
                 for module in curr.get("modules", []):
                     # Iterate through each subject in the module
-                    for subject in module.get("disciplinas", []):
-                        # Check if the subject is not completed
-                        if subject["name"] not in [sub["subjectName"] for sub in student_data["completed_subjects"]]:
-                            # Add the subject to the list of remaining subjects
-                            remaining_subject = {
-                                "subjectName": subject["name"],
-                                "workload": subject["workload"]
-                            }
-                            student_data["remaining_subjects"].append(remaining_subject)
-            
+                    periodo = module['index'] + 1
+                    if periodo <= student_info['periodo_esperado']:
+                        for subject in module.get("disciplinas", []):
+                            # Check if the subject is not completed
+                            if (subject["name"] not in [sub["subjectName"] for sub in student_data["completed_subjects"]]) and \
+                                    (subject["name"] not in [sub["subjectName"] for sub in student_data["failed_subjects"]]):
+                                # Add the subject to the list of remaining subjects
+                                remaining_subject = {
+                                    "subjectName": subject["name"],
+                                    "workload": subject["workload"]
+                                }
+                                student_data["remaining_subjects"].append(remaining_subject)
+            student_data['remaining_subjects'] += student_data['failed_subjects']    
             # Add the student's data to the result JSON
             result_json[student_id] = student_data
 
@@ -360,6 +400,8 @@ class Alunos():
 
 
 def testeTOTVS():
+    
+    
     auth = ("ricardo.sekeff","Jfsb@102628")
     
     headers = {
@@ -371,6 +413,60 @@ def testeTOTVS():
     for r in lst_registros:
         print(f"{r['RA']} - {r['NOMEALUNO']}")
     return lst_registros
+    
+
+def testeTovs2():
+    body = {'username':'00287283356',
+'password':'123456',
+'rememberUser':'false'}
+    url = "https://grupoeducacional127611.rm.cloudtotvs.com.br/FrameHTML/web/app/Edu/PortalDoProfessor/aliasname.corporerm/api/connect/token"    
+    try:
+        token = json.loads(json.dumps(requests.post(url, data=body).json()))
+    except Exception as e:
+        print(e)
+        return e
+    return token
+    
+# @app.route('/')
+# def get_token():
+#     # Obtenha os dados do token
+#     token_data =testeTovs2()
+
+#     # Criar a estrutura desejada
+#     token_info = {
+#         'alias': 'Y29ycG9yZXJt',
+#         'breadcrumbs': '',
+#         'datelogin': datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+#         'expires_at': (datetime.now() + timedelta(seconds=token_data['expires_in'])).strftime("%Y-%m-%d %H:%M:%S"),
+#         'expires_in': token_data['expires_in'],
+#         'PO_DEFAULT_LANGUAGE': 'pt-BR',
+#         'refresh_token': token_data['refresh_token'],
+#         'user_access_token': token_data['access_token']
+#     }
+
+#     # Armazenar os dados no armazenamento local do navegador
+#     session_data = json.dumps(token_info)
+    
+#     return render_template('index.html', token_info = token_info)
+#     js_code = f'''
+#         localStorage.setItem("x", {session_data});
+
+#         var cookieValue = "odlzmadzhkh5cjd3fhx1cfo1";
+#         var expirationDate = new Date();
+#         expirationDate.setMinutes(expirationDate.getMinutes() + 30);  // Defina o tempo de expiração do cookie aqui
+#         var cookieString = "ASP.Net_SessionId=" + cookieValue;
+#         cookieString += "; Domain=grupoeducacional127611.rm.cloudtotvs.com.br";
+#         cookieString += "; Expires=" + expirationDate.toUTCString();
+#         cookieString += "; SameSite=Lax";
+#         cookieString += "; HttpOnly";
+#         cookieString += "; Secure";
+#         document.cookie = cookieString;
+
+#         window.location.replace("https://grupoeducacional127611.rm.cloudtotvs.com.br/FrameHTML/Web/App/Edu/PortalDoProfessor/#/portal/home");
+#     '''
+#     return f'<script>{js_code}</script>'
+#     return f'<script>localStorage.setItem("token_info", {session_data}); window.location.replace("https://grupoeducacional127611.rm.cloudtotvs.com.br/FrameHTML/Web/App/Edu/PortalDoProfessor/#/portal/home");</script>'
+
     
 
 def normalizarMatriculas(matriculas):
@@ -394,22 +490,23 @@ def normalizarMatriculas(matriculas):
                             alunos[m['idPerson']]['idCurriculumAtual'] = m['idCurriculum']
                             alunos[m['idPerson']]['curriculos'].append(m['idCurriculum'])
             else:
-                
                 dia = [c['date'] for c in mc['statuses'] if c['status'] == 'active']
-                alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'nomeCurso':m['courseName'], 'idCurriculumAtual': m['idCurriculum'], 'curriculos': [m['idCurriculum']], 'dtmat': dia[0] if len(dia) > 0 else ''}
+                periodo_esperado = (24 - int(m['code'][0:2])) * 2
+                alunos[m['idPerson']] = {'idPerson':m['idPerson'] ,'ra': m['code'], 'periodo_esperado':periodo_esperado, 'name': m['personName'],'idCourse': Curso().getCursoByName(m['courseName'])['idCourse'],'nomeCurso':m['courseName'], 'idCurriculumAtual': m['idCurriculum'], 'curriculos': [m['idCurriculum']], 'dtmat': dia[0] if len(dia) > 0 else ''}
                 alunos[m['idPerson']]['matriculas'] = [m]
+                
             i += 1
             print(indent(f"Matrícula {i} de {total}", prefix = '       ', predicate=None))
             if DEBUG:
-                if i > 3:
+                if i > 20:
                     break
         else:
             print(m)
     return alunos
 
-# testeTOTVS()
+# testeTovs2()
 if DEBUG:
-    calendarios = [2528, 2965]
+    calendarios = [2528, 2965, 3315, 5190]
     print('====== MODO DEBUG =====')
 print('Recuperando matrículas das Campanhas...')
 #calendarios = [1244,1498,3795,1847,1876,2248,2528,2965,3224,3629]
@@ -434,7 +531,7 @@ for aluno in alunos:
     print(f"{i} de {tam}" )
     i = i+1
     if DEBUG:
-        if i==3:
+        if i>20:
             break
 
 print('Construíndo a tabela de dependências finais...')    
@@ -448,3 +545,5 @@ with open(file_path, "w") as json_file:
 
 print("JSON data saved to:", file_path)
 
+# if __name__ == '__main__':
+#     app.run(debug=True)
